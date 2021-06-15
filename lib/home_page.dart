@@ -11,6 +11,7 @@ class HomePageState extends State<HomePage> {
   static const Tc = 647.096, pc = 22064000, alpha_0 = 1000, rho_c = 322;
   double dAlpha = -1135.905627715;
   var result,
+      result1,
       pres,
       theta,
       tau,
@@ -39,6 +40,15 @@ class HomePageState extends State<HomePage> {
     -1.75493479,
     -45.5170352,
     -674694.45
+  ];
+
+  List<double> c = [
+    -2.03150240,
+    -2.68302940,
+    -5.38626492,
+    -17.2991605,
+    -44.7586581,
+    -63.9201063
   ];
 
   List<double> d = [
@@ -80,6 +90,20 @@ class HomePageState extends State<HomePage> {
     return ans;
   }
 
+  double rhoV(double temp) {
+    theta = temp / Tc;
+    tau = 1 - theta;
+    lntau = log(tau);
+    tempVar = c[0] * exp(lntau / 3.0) +
+        c[1] * exp(2.0 * lntau / 3.0) +
+        c[2] * exp(4.0 * lntau / 3.0) +
+        c[3] * exp(3.0 * lntau) +
+        c[4] * exp(37.0 * lntau / 6.0) +
+        c[5] * exp(71.0 * lntau / 6.0);
+    ans = rho_c * exp(tempVar * 1.0);
+    return ans;
+  }
+
   double alpha(double temp) {
     theta = temp / Tc;
     tempVar = dAlpha +
@@ -115,48 +139,74 @@ class HomePageState extends State<HomePage> {
       temp = ((temp - 32) / 1.8) + 273.15;
       pres = satPres(temp);
 
+      //liquid
       result = alpha(temp) + ((temp / rhoL(temp)) * dpdT(pres, temp));
       result = result / (1055.056 * 2.2046226);
       result = result.toStringAsFixed(6);
+      //vapor
+      result1 = alpha(temp) + ((temp / rhoV(temp)) * dpdT(pres, temp));
+      result1 = result1 / (1055.056 * 2.2046226);
+      result1 = result1.toStringAsFixed(6);
     });
   }
-// functions here
+
+  void doClear() {
+    setState(() {
+      result = 0;
+      result1 = 0;
+
+      t1.text = "0";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: new Text("Calculator"),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Steam Enthalpy: Temperature"),
       ),
-      body: new Container(
+      body: Container(
         padding: const EdgeInsets.all(40.0),
-        child: new ListView(
+        child: ListView(
           children: [
-            new Text(
+            Text(
               "Enthalpy(liquid) is: $result" + " Btu/lb",
-              style: new TextStyle(
+              style: TextStyle(
                   fontSize: 16.0,
                   fontWeight: FontWeight.bold,
                   color: Colors.purple),
             ),
-            new TextField(
+            Text(
+              "Enthalpy(vapor) is: $result1" + " Btu/lb",
+              style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple),
+            ),
+            TextField(
               keyboardType: TextInputType.number,
               decoration:
-                  new InputDecoration(hintText: "Enter temperature in deg F: "),
+                  InputDecoration(hintText: "Enter temperature in deg F: "),
               controller: t1,
             ),
-            new Padding(
+            Padding(
               padding: const EdgeInsets.only(top: 20.0),
             ),
-            new Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                new TextButton(
-                    child: new Text("Solve"),
+                TextButton(
+                    child: Text("Solve"),
                     style: ButtonStyle(
                         backgroundColor:
                             MaterialStateProperty.all(Colors.greenAccent)),
                     onPressed: tempInputEnthalpy),
+                TextButton(
+                    child: Text("Clear"),
+                    style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all(Colors.greenAccent)),
+                    onPressed: doClear),
               ],
             )
           ],
